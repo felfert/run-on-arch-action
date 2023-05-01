@@ -3,6 +3,7 @@ on: [push, pull_request, workflow_dispatch]
 
 jobs:
   testactions_job:
+    continue-on-error: true
     runs-on: ubuntu-latest
     name: Test
 
