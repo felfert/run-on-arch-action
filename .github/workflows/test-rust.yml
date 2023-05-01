@@ -1,0 +1,47 @@
+name: Rust Tests
+on: [push, pull_request, workflow_dispatch]
+
+env:
+  CARGO_TERM_COLOR: always
+  INSTALLDEPS: "apt-get update && apt-get install -y libclang-dev clang llvm"
+
+jobs:
+  testactions_job:
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    name: Test
+
+    strategy:
+      matrix:
+        include:
+          # The full matrix of Dockerfiles would be extensive, so just
+          # cover each arch and OS at least once.
+          - arch: aarch64
+            distro: ubuntu_latest
+          - arch: i686
+            distro: ubuntu_latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Build and run container
+      id: build
+      uses: ./
+      with:
+        githubToken: ${{ github.token }}
+        arch: ${{ matrix.arch }}
+        distro: ${{ matrix.distro }}
+        env: |
+          env_arch: ${{ matrix.arch }}
+          env_distro: ${{ matrix.distro }}
+          CARGO_TERM_COLOR: ${{ env.CARGO_TERM_COLOR }}
+        install: |
+          apt-get update -y
+          apt-get install -y libclang-dev llvm clang curl
+          curl --proto '=https' --tlsv1.2 https://sh.rustup.rs -sSf | bash -s -- -y -q
+        run: |
+          source "$HOME/.cargo/env"
+          echo ENV begin
+          env
+          echo ENV end
